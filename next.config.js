@@ -21,9 +21,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: fastDev, // FAST_DEV=1 でESLintを非ブロッキング化
   },
-  experimental: {
-    turbo: true, // Turbopack を有効化（`npm run dev:turbo` で活用）
-  },
+  // NOTE: Turbopack は `next dev --turbo` のCLIフラグで利用。設定側での boolean 指定は警告対象のため未指定。
 };
 
 module.exports = nextConfig;
