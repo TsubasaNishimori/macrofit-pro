@@ -148,3 +148,26 @@ MIT License
 作者: MacroFit Pro チーム / シニアフルスタックアーキテクト  
 初版: 2025-09-16  
 更新: 2025-09-24
+
+---
+## ⚡ 開発起動が遅いと感じる場合の高速化Tips
+
+| 対策 | コマンド / 設定 | 効果 |
+|------|-----------------|------|
+| Turbopack利用 | `npm run dev:turbo` | 増分ビルド高速化 |
+| 型/ESLint遅延 | `FAST_DEV=1 npm run dev` | 起動ブロック解除 |
+| キャッシュ維持 | `.next` を毎回削除しない | 再起動短縮 |
+| OneDrive外へ移動 | プロジェクトをローカル非同期領域へ | I/O改善 |
+| 不要依存の削減 | 使っていないライブラリを削除 | 解析負荷軽減 |
+| Nodeメモリ拡張(稀) | `set NODE_OPTIONS=--max-old-space-size=4096` (Win) | GC頻度低減 |
+
+推奨ワークフロー例：
+```bash
+# 通常
+npm run dev
+
+# 重いと感じたら（高速モード）
+FAST_DEV=1 npm run dev:turbo   # Windows PowerShell: $env:FAST_DEV=1; npm run dev:turbo
+```
+
+Windows / OneDrive 環境で特に遅い場合は VSCode のワークスペースを `C:\dev\macrofit-pro` のような同期対象外パスへ配置することを検討してください。
