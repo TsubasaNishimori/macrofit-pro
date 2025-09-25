@@ -151,12 +151,18 @@ function generateShoppingListFromMealPlan(mealPlan: PatternBasedMealPlan, protei
       if (index === 0) {
         // 朝食（固定メニュー）: 7回
         weeklyUsage = 7;
-      } else if (index === 1 || index === 3) {
-        // 昼食・夕食パターンA: 4回（月水金日）
+      } else if (index === 1) {
+        // 昼食パターンA: 4回（月水金日）
         weeklyUsage = 4;
-      } else if (index === 2 || index === 4) {
-        // 昼食・夕食パターンB: 3回（火木土）
+      } else if (index === 2) {
+        // 昼食パターンB: 3回（火木土）
         weeklyUsage = 3;
+      } else if (index === 3) {
+        // 夕食パターンA: 3回（火木土）
+        weeklyUsage = 3;
+      } else if (index === 4) {
+        // 夕食パターンB: 4回（月水金日）
+        weeklyUsage = 4;
       }
       
       pattern.ingredients.forEach((ingredient: any) => {
