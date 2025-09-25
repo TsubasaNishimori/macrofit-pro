@@ -268,14 +268,15 @@ function categorizeIngredient(ingredientName: string): string {
 // 1週間分の価格を推定する関数
 function estimatePrice(name: string, amount: number, unit: string): number {
   const pricePerUnit: { [key: string]: number } = {
-    // 主食類
+    // 主食類（kg単位で管理）
     '米': 400,          // 1kg当たり400円
     '白米': 400,        // 1kg当たり400円
     '玄米': 500,        // 1kg当たり500円
-    '食パン': 150,      // 1斤当たり150円
-    'パン': 150,        // 1斤当たり150円
     'オートミール': 600, // 1kg当たり600円
-    'パスタ': 200,      // 500g当たり200円
+    'パスタ': 400,      // 1kg当たり400円（500g袋×2で算出）
+    // パンは個別単位
+    '食パン': 150,      // 1斤（約340g）当たり150円
+    'パン': 150,        // 1斤当たり150円
     'うどん': 100,      // 1玉当たり100円
     'そば': 150,        // 1束当たり150円
     // 肉類
@@ -298,10 +299,23 @@ function estimatePrice(name: string, amount: number, unit: string): number {
     'りんご': 100       // 1個当たり100円
   };
   
-  const defaultPrice = 100; // デフォルト価格
+  const defaultPrice = 100; // デフォルト価格（100g当たり）
   
   if (unit === 'g') {
     const unitPrice = pricePerUnit[name] || defaultPrice;
+    
+    // kg単位で価格設定されている主食類
+    if (name.includes('米') || name.includes('白米') || name.includes('玄米') || 
+        name.includes('オートミール') || name.includes('パスタ')) {
+      return Math.ceil((amount / 1000) * unitPrice);
+    }
+    
+    // パンは斤単位（約340g）
+    if (name.includes('パン') || name.includes('食パン')) {
+      return Math.ceil((amount / 340) * unitPrice);
+    }
+    
+    // その他の食材は100g単位
     return Math.ceil((amount / 100) * unitPrice);
   } else if (unit === 'ml') {
     const unitPrice = pricePerUnit[name] || 200; // デフォルト1L=200円
