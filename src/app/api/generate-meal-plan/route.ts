@@ -169,15 +169,35 @@ function generateShoppingListFromMealPlan(mealPlan: PatternBasedMealPlan, protei
         
         const key = name;
         const category = categorizeIngredient(name);
-        
-        // 米類は炊飯後重量から生米重量に変換（炊飯後：生米 = 2.2:1）
+        // 量と単位の調整（米とパン）
         let adjustedAmount = ingredient.amount;
+        let adjustedUnit = ingredient.unit;
+        
+        // 米類: 炊飯後重量(g) → 生米重量(g) (2.2倍差)
         if (name.includes('米') || name.includes('白米') || name.includes('玄米')) {
-          adjustedAmount = Math.ceil(ingredient.amount / 2.2); // 炊飯後→生米変換
+          adjustedAmount = Math.ceil(ingredient.amount / 2.2); // 炊飯後→生米
+          // shopping表示単位は後で g(生米) に統一するが、価格計算は元々 g 単位想定なので unit は 'g' のままで良い
+        }
+        
+        // 食パン / パン: 6枚切り 1斤=6枚=約340g → 1枚≈57g
+        if (name.includes('食パン') || (name === 'パン')) {
+          // AI 応答が g・斤・枚 いずれかの可能性を考慮
+          if (adjustedUnit === 'g' || adjustedUnit === 'グラム') {
+            const slices = adjustedAmount / 57; // 1枚≈57g
+            adjustedAmount = Math.ceil(slices * 100) / 100; // 端数保持（最小0.01枚）
+            adjustedUnit = '枚';
+          } else if (adjustedUnit === '斤') {
+            adjustedAmount = adjustedAmount * 6; // 斤→枚
+            adjustedUnit = '枚';
+          } else if (adjustedUnit === '枚') {
+            // そのまま
+          } else {
+            // 不明な単位は枚換算不能のためそのまま扱う
+          }
         }
         
         const weeklyAmount = adjustedAmount * weeklyUsage;
-        const estimatedPrice = estimatePrice(name, weeklyAmount, ingredient.unit);
+        const estimatedPrice = estimatePrice(name, weeklyAmount, adjustedUnit);
         
         if (ingredientMap.has(key)) {
           const existing = ingredientMap.get(key)!;
@@ -185,16 +205,18 @@ function generateShoppingListFromMealPlan(mealPlan: PatternBasedMealPlan, protei
           existing.estimatedPrice += estimatedPrice;
           
           // 米類の単位表記を統一
-          if ((name.includes('米') || name.includes('白米') || name.includes('玄米')) && 
-              existing.unit !== 'g(生米)') {
+          if ((name.includes('米') || name.includes('白米') || name.includes('玄米')) && existing.unit !== 'g(生米)') {
             existing.unit = 'g(生米)';
           }
-        } else {
-          // 米類の買い物リスト表示単位を調整
-          let displayUnit = ingredient.unit;
-          if (name.includes('米') || name.includes('白米') || name.includes('玄米')) {
-            displayUnit = 'g(生米)';
+          // 食パンの単位表記を統一（枚）
+          if ((name.includes('食パン') || name === 'パン') && existing.unit !== '枚') {
+            existing.unit = '枚';
           }
+        } else {
+          // 表示単位調整
+          let displayUnit = adjustedUnit;
+          if (name.includes('米') || name.includes('白米') || name.includes('玄米')) displayUnit = 'g(生米)';
+          if (name.includes('食パン') || name === 'パン') displayUnit = '枚';
           
           ingredientMap.set(key, {
             amount: weeklyAmount,
@@ -319,7 +341,8 @@ function estimatePrice(name: string, amount: number, unit: string): number {
   
   const defaultPrice = 100; // デフォルト価格（100g当たり）
   
-  if (unit === 'g') {
+  // g(生米) のような派生表記は g として扱う
+  if (unit.startsWith('g')) {
     const unitPrice = pricePerUnit[name] || defaultPrice;
     
     // kg単位で価格設定されている主食類
@@ -335,6 +358,14 @@ function estimatePrice(name: string, amount: number, unit: string): number {
     
     // その他の食材は100g単位
     return Math.ceil((amount / 100) * unitPrice);
+  } else if (unit === '枚') {
+    // 食パン 6枚 = 1斤
+    if (name.includes('食パン') || name === 'パン') {
+      const loafPrice = pricePerUnit['食パン'] || pricePerUnit['パン'] || 150;
+      return Math.ceil((amount / 6) * loafPrice);
+    }
+    // 想定外の枚は一旦1枚50円換算
+    return Math.ceil(amount * 50);
   } else if (unit === 'ml') {
     const unitPrice = pricePerUnit[name] || 200; // デフォルト1L=200円
     return Math.ceil((amount / 1000) * unitPrice);
@@ -402,18 +433,20 @@ export async function POST(request: NextRequest) {
     };
 
     // 週間献立生成プロンプト作成
-    const systemPrompt = `栄養専門家として、効率的な週間食事パターンを作成してください。
+  const systemPrompt = `栄養専門家として、効率的かつ飽きにくい週間食事パターンを作成してください。
 
 食事パターン仕様:
 - 朝食: 固定メニュー (毎日同じ)
 - 昼食・夕食: 各2パターン (A/B交互使用)
-- 週間スケジュール: 月水金日=A、火木土=B
+- 週間スケジュール: 昼食と夕食で毎日 A/B を入れ替えて飽きにくくする
+- 例: 月(L:A D:B) / 火(L:B D:A) / 水(L:A D:B) / 木(L:B D:A) / 金(L:A D:B) / 土(L:B D:A) / 日(L:A D:B)
 
 必要条件:
 1. 各食事の指定カロリーを厳守 (±2%以内)
 2. 作り置き最大化 (昼食・夕食2パターン)
 3. ユーザー選択タンパク質源を優先、アレルギー除外
 4. 米類は炊飯後重量で記載し生米量を併記: "白米150g(0.5合分)"
+5. 食パンは6枚切り想定 (1斤=6枚=約340g, 1枚≈57g)。使用する場合は単位を必ず枚で記載し、例: "食パン2枚"。グラム表記は禁止。
 
 ${proteinIntakeFrequency > 0 ? `プロテイン摂取 (1日${proteinIntakeFrequency}回):
 - タイミング: ${proteinIntakeFrequency === 1 ? '朝食時or間食' : proteinIntakeFrequency === 2 ? '朝食時・間食時' : '食事時+間食時'}
@@ -434,7 +467,7 @@ ${proteinIntakeFrequency > 0 ? `プロテイン摂取 (1日${proteinIntakeFreque
   "prepTime": 数値,
   "nutritionSummary": {"dailyCalories":数値,"dailyProtein":数値,"dailyFat":数値,"dailyCarbs":数値},
   "mealPatterns": ${JSON.stringify(getMealPatternsStructure(patternSpec, proteinIntakeFrequency), null, 2)},
-  "weeklySchedule": {"monday":{"lunch":"patternA","dinner":"patternA"},"tuesday":{"lunch":"patternB","dinner":"patternB"},"wednesday":{"lunch":"patternA","dinner":"patternA"},"thursday":{"lunch":"patternB","dinner":"patternB"},"friday":{"lunch":"patternA","dinner":"patternA"},"saturday":{"lunch":"patternB","dinner":"patternB"},"sunday":{"lunch":"patternA","dinner":"patternA"}}
+  "weeklySchedule": {"monday":{"lunch":"patternA","dinner":"patternB"},"tuesday":{"lunch":"patternB","dinner":"patternA"},"wednesday":{"lunch":"patternA","dinner":"patternB"},"thursday":{"lunch":"patternB","dinner":"patternA"},"friday":{"lunch":"patternA","dinner":"patternB"},"saturday":{"lunch":"patternB","dinner":"patternA"},"sunday":{"lunch":"patternA","dinner":"patternB"}}
 }`;
 
     const userPrompt = `プロフィール:
