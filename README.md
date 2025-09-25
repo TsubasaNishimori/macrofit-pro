@@ -161,21 +161,147 @@ MIT License
 
 ## 🚀 本番デプロイメント
 
-### Vercel デプロイ
+本番運用のための 3 パターン（Vercel / Docker / Azure App Service）を示します。まず Vercel を推奨し、必要に応じて他を利用してください。
+
+### 1. Vercel (推奨)
+#### 手順（GUI）
+1. https://vercel.com にログイン / サインアップ
+2. "Add New..." → "Project" → GitHub リポジトリ `macrofit-pro` を選択
+3. Framework Preset = Next.js（自動検出）
+4. Environment Variables に以下を追加:
+	 - `AZURE_OPENAI_ENDPOINT`
+	 - `AZURE_OPENAI_API_KEY`
+	 - `AZURE_OPENAI_API_VERSION`
+	 - `AZURE_OPENAI_GPT4_DEPLOYMENT`
+5. Deploy ボタンを押す
+
+#### CLI からのデプロイ
 ```bash
-# Vercel CLI を使用
 npm install -g vercel
+vercel link   # 初回のみ
+vercel env add AZURE_OPENAI_ENDPOINT
+vercel env add AZURE_OPENAI_API_KEY
+vercel env add AZURE_OPENAI_API_VERSION
+vercel env add AZURE_OPENAI_GPT4_DEPLOYMENT
 vercel --prod
 ```
 
-### 環境変数設定
-本番環境では以下の環境変数を設定してください：
-- `AZURE_OPENAI_ENDPOINT`
-- `AZURE_OPENAI_API_KEY`
-- `AZURE_OPENAI_API_VERSION`
-- `AZURE_OPENAI_GPT4_DEPLOYMENT`
+#### Vercel 特記事項
+- Turbopack は開発のみ利用。本番ビルドは `next build`（自動）
+- Edge Functions は未使用（将来: API を Edge 化する余地あり）
+- 環境変数変更後は再デプロイ必要
 
-### パフォーマンス最適化
-- 本番ビルドでは TypeScript と ESLint チェックが有効
-- 画像最適化とコード分割を自動実行
-- Azure OpenAI API のレート制限に対応済み
+### 2. Docker コンテナデプロイ
+`Dockerfile` は未同梱のため簡易例を提示します。必要なら `Dockerfile` を追加してください。
+
+Dockerfile 例:
+```Dockerfile
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production \
+		NEXT_TELEMETRY_DISABLED=1
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY package.json package-lock.json* ./
+RUN npm install --omit=dev
+EXPOSE 3000
+CMD ["npm","run","start"]
+```
+
+ビルド & 実行:
+```bash
+docker build -t macrofit-pro:latest .
+docker run -p 3000:3000 --env-file .env.production macrofit-pro:latest
+```
+`.env.production` に本番用環境変数を記載（`.env.local` をコピーしてキーのみ変更）。
+
+### 3. Azure App Service (Linux)
+1. Azure Portal で App Service (Linux, Node 20 LTS) を作成
+2. デプロイ方法: GitHub Actions 連携を有効化
+3. App Settings に環境変数を追加（Vercel と同じ）
+4. ビルドコマンド: `npm install && npm run build`
+5. 起動コマンド: `npm run start`
+6. デプロイ後、`/api/generate-meal-plan` をログで確認（失敗時は Application Logs をオン）
+
+GitHub Actions ワークフロー例 (`.github/workflows/deploy.yml`) 概要:
+```yaml
+name: Deploy Azure App Service
+on:
+	push:
+		branches: [ main ]
+jobs:
+	build-and-deploy:
+		runs-on: ubuntu-latest
+		steps:
+			- uses: actions/checkout@v4
+			- uses: actions/setup-node@v4
+				with:
+					node-version: '20'
+			- run: npm ci
+			- run: npm run build
+			- name: 'Deploy'
+				uses: azure/webapps-deploy@v3
+				with:
+					app-name: ${{ secrets.AZURE_APP_NAME }}
+					publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+					package: .
+```
+
+### 4. 環境変数 (本番再掲)
+| 変数 | 用途 | 備考 |
+|------|------|------|
+| AZURE_OPENAI_ENDPOINT | Azure OpenAI エンドポイント | https://xxxx.openai.azure.com |
+| AZURE_OPENAI_API_KEY | API キー | Key Vault 管理推奨 |
+| AZURE_OPENAI_API_VERSION | API バージョン | 例: 2024-12-01-preview |
+| AZURE_OPENAI_GPT4_DEPLOYMENT | GPT-4o mini デプロイ名 | 必須 |
+| AZURE_OPENAI_GPT35_DEPLOYMENT | GPT-3.5系デプロイ名 | コスト調整用 |
+| AZURE_OPENAI_EMBEDDING_DEPLOYMENT | 埋め込みモデル | 拡張用 |
+
+### 5. 本番ビルド手動確認手順
+```bash
+rm -rf .next
+npm ci
+npm run build
+npm run start
+# -> http://localhost:3000 で /results まで動作確認
+```
+
+### 6. セキュリティ & コスト最適化ヒント
+- API キーを直書きしない（CI は Secret / Vercel Env）
+- OpenAI レート上限を超えそうなら温度 (temperature) を低く維持（既に0.1）
+- 失敗再試行ロジック（指数バックオフ）追加は将来検討
+- API 呼び出し JSON サイズ削減 → 不要フィールドをプロンプトから削除可能
+
+### 7. 運用チェックリスト
+| 項目 | 確認 |
+|------|------|
+| ビルド成功 | `next build` OK |
+| 環境変数設定 | すべて反映済み |
+| /api/generate-meal-plan 応答 | 200 & JSON parse OK |
+| 体重予測表示 | 週数と日付一致 |
+| 献立生成時間 | < 25s 目標 (初回) |
+| キャッシュクリア動作 | 期待通り |
+
+### 8. トラブルシュート (本番特化)
+| 症状 | 原因候補 | 対処 |
+|------|----------|------|
+| 500 (献立API) | OpenAIキー不正 / レート超過 | Azure Portal の Metrics / Quotas 確認 |
+| 生成が極端に遅い | ネットワーク遅延 / モデル過負荷 | 再試行 / モデルバージョン更新検討 |
+| JSON解析エラー | モデル出力に説明文混入 | プロンプト内「純粋JSON」強調強化 |
+| コスト急増 | リクエスト回数多すぎ | UI に生成回数制限 UI 追加検討 |
+| メモリ不足 (Docker) | Node heap 小 | `NODE_OPTIONS=--max-old-space-size=4096` |
+
+---
+デプロイ関連の詳細を別ファイルに分離したい場合は `DEPLOYMENT.md` 作成を推奨します。
