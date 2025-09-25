@@ -76,9 +76,18 @@ AZURE_OPENAI_MAX_TOKENS_PER_MINUTE=200000
 
 ### 4. 開発サーバー起動
 ```bash
+# 高速モード（Turbopack使用）- 推奨
 npm run dev
+
+# レガシーモード（通常のWebpack）
+npm run dev:legacy
 ```
 ブラウザで: http://localhost:3000
+
+**起動が遅い場合の対処法:**
+- **OneDriveの影響**: プロジェクトを `C:\dev\macrofit-pro` など非同期フォルダに移動
+- **キャッシュ削除**: `.next` フォルダを削除後に再起動
+- **Node.js メモリ**: `set NODE_OPTIONS=--max-old-space-size=4096` で起動
 
 ### 5. 利用フロー
 1. トップページで身体情報と目標を入力
