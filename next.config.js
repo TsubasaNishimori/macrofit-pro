@@ -13,13 +13,8 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: false,
   },
-  // 開発時のパフォーマンス最適化
+  // 開発時のパフォーマンス最適化（Turbopack対応）
   swcMinify: true,
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
-  },
-  // ビルド最適化
-  output: 'standalone',
   poweredByHeader: false,
 };
 
