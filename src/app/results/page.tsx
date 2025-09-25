@@ -198,14 +198,14 @@ export default function Results() {
                 if (typeof window !== 'undefined') {
                   window.sessionStorage.clear();
                   window.localStorage.clear();
-                  console.log('🧹 キャッシュクリア完了');
+                  console.log('🧹 クリア完了');
                 }
                 // ページをリロード
                 window.location.reload();
               }}
               className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
             >
-              🧹 キャッシュクリア
+              🧹 クリア
             </button>
             <button
               onClick={generateMealPlan}

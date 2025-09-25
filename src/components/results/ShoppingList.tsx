@@ -96,16 +96,6 @@ export default function ShoppingListDisplay({ shoppingList, loading = false }: S
         ))}
       </div>
 
-      {/* アクションボタン */}
-      <div className="mt-6 flex space-x-3">
-        <button className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors">
-          📱 リストをエクスポート
-        </button>
-        <button className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors">
-          🔄 リストを更新
-        </button>
-      </div>
-
       {/* 買い物のコツ */}
       <div className="mt-6 p-4 bg-blue-50 rounded-lg">
         <h4 className="text-md font-medium mb-2 text-blue-800">💡 買い物のコツ</h4>
