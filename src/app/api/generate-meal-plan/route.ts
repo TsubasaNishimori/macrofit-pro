@@ -92,7 +92,7 @@ function getMealPatternsStructure(patternSpec: any, proteinIntakeFrequency: numb
         carbs: "炭水化物(g)",
         cookingTime: "調理時間(分)",
         batchCookable: true,
-        prepQuantity: "4食分（月水金日）",
+        prepQuantity: "4食分（例: 月/水/金/日 or AA日の組合せ含む）",
         ingredients: "[...]",
         instructions: "[...]"
       },
@@ -105,7 +105,7 @@ function getMealPatternsStructure(patternSpec: any, proteinIntakeFrequency: numb
         carbs: "炭水化物(g)",
         cookingTime: "調理時間(分)",
         batchCookable: true,
-        prepQuantity: "3食分（火木土）",
+        prepQuantity: "3食分（例: 火/木/土 or BB日の組合せ含む）",
         ingredients: "[...]",
         instructions: "[...]"
       }
@@ -158,11 +158,11 @@ function generateShoppingListFromMealPlan(mealPlan: PatternBasedMealPlan, protei
         // 昼食パターンB: 3回（火木土）
         weeklyUsage = 3;
       } else if (index === 3) {
-        // 夕食パターンA: 3回（火木土）
-        weeklyUsage = 3;
-      } else if (index === 4) {
-        // 夕食パターンB: 4回（月水金日）
+        // 夕食パターンA: 4回（例: 月/水/金/日 うち水がAA日）
         weeklyUsage = 4;
+      } else if (index === 4) {
+        // 夕食パターンB: 3回（例: 火/木/土 うち土がBB日）
+        weeklyUsage = 3;
       }
       
       pattern.ingredients.forEach((ingredient: any) => {
@@ -443,9 +443,9 @@ export async function POST(request: NextRequest) {
 
 食事パターン仕様:
 - 朝食: 固定メニュー (毎日同じ)
-- 昼食・夕食: 各2パターン (A/B交互使用)
-- 週間スケジュール: 昼食と夕食で毎日 A/B を入れ替えて飽きにくくする
-- 例: 月(L:A D:B) / 火(L:B D:A) / 水(L:A D:B) / 木(L:B D:A) / 金(L:A D:B) / 土(L:B D:A) / 日(L:A D:B)
+- 昼食・夕食: 各2パターン (A/B交互使用 + 週内にAA/BB組合せ日を少なくとも各1日導入可能)
+- 週間スケジュール: 基本は交互 (L:A D:B / L:B D:A) だが、変化と作り置き効率向上のために AA (L:A D:A) と BB (L:B D:B) の日をそれぞれ1日まで許容
+- 例: 月(L:A D:B) / 火(L:B D:A) / 水(L:A D:A ← AA) / 木(L:B D:A) / 金(L:A D:B) / 土(L:B D:B ← BB) / 日(L:A D:B)
 
 必要条件:
 1. 各食事の指定カロリーを厳守 (±2%以内)
@@ -473,7 +473,7 @@ ${proteinIntakeFrequency > 0 ? `プロテイン摂取 (1日${proteinIntakeFreque
   "prepTime": 数値,
   "nutritionSummary": {"dailyCalories":数値,"dailyProtein":数値,"dailyFat":数値,"dailyCarbs":数値},
   "mealPatterns": ${JSON.stringify(getMealPatternsStructure(patternSpec, proteinIntakeFrequency), null, 2)},
-  "weeklySchedule": {"monday":{"lunch":"patternA","dinner":"patternB"},"tuesday":{"lunch":"patternB","dinner":"patternA"},"wednesday":{"lunch":"patternA","dinner":"patternB"},"thursday":{"lunch":"patternB","dinner":"patternA"},"friday":{"lunch":"patternA","dinner":"patternB"},"saturday":{"lunch":"patternB","dinner":"patternA"},"sunday":{"lunch":"patternA","dinner":"patternB"}}
+  "weeklySchedule": {"monday":{"lunch":"patternA","dinner":"patternB"},"tuesday":{"lunch":"patternB","dinner":"patternA"},"wednesday":{"lunch":"patternA","dinner":"patternA"},"thursday":{"lunch":"patternB","dinner":"patternA"},"friday":{"lunch":"patternA","dinner":"patternB"},"saturday":{"lunch":"patternB","dinner":"patternB"},"sunday":{"lunch":"patternA","dinner":"patternB"}}
 }`;
 
     const userPrompt = `プロフィール:
