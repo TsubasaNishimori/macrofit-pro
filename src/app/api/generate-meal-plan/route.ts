@@ -224,12 +224,12 @@ function generateShoppingListFromMealPlan(mealPlan: PatternBasedMealPlan, protei
 function isStockItem(ingredientName: string): boolean {
   const name = ingredientName.toLowerCase();
   
-  const staples = ['米', '白米', '玄米', 'パン', '食パン', 'オートミール', 'パスタ', 'うどん', 'そば'];
+  // 主食類は買い物リストに含めるため除外
+  // const staples = ['米', '白米', '玄米', 'パン', '食パン', 'オートミール', 'パスタ', 'うどん', 'そば'];
   const seasonings = ['塩', '胡椒', '砂糖', '醤油', '味噌', 'みりん', '酒', 'ごま油', 'オリーブオイル', 'サラダ油', 'バター'];
   const proteinPowders = ['プロテイン', 'プロテインパウダー', 'ホエイプロテイン'];
   
-  return staples.some(item => name.includes(item)) || 
-         seasonings.some(item => name.includes(item)) || 
+  return seasonings.some(item => name.includes(item)) || 
          proteinPowders.some(item => name.includes(item));
 }
 
@@ -237,6 +237,9 @@ function isStockItem(ingredientName: string): boolean {
 function categorizeIngredient(ingredientName: string): string {
   const name = ingredientName.toLowerCase();
   
+  if (name.includes('米') || name.includes('白米') || name.includes('玄米') || name.includes('パン') || name.includes('食パン') || name.includes('オートミール') || name.includes('パスタ') || name.includes('うどん') || name.includes('そば')) {
+    return '主食・穀物';
+  }
   if (name.includes('鶏') || name.includes('豚') || name.includes('牛') || name.includes('肉')) {
     return '肉類';
   }
@@ -265,6 +268,17 @@ function categorizeIngredient(ingredientName: string): string {
 // 1週間分の価格を推定する関数
 function estimatePrice(name: string, amount: number, unit: string): number {
   const pricePerUnit: { [key: string]: number } = {
+    // 主食類
+    '米': 400,          // 1kg当たり400円
+    '白米': 400,        // 1kg当たり400円
+    '玄米': 500,        // 1kg当たり500円
+    '食パン': 150,      // 1斤当たり150円
+    'パン': 150,        // 1斤当たり150円
+    'オートミール': 600, // 1kg当たり600円
+    'パスタ': 200,      // 500g当たり200円
+    'うどん': 100,      // 1玉当たり100円
+    'そば': 150,        // 1束当たり150円
+    // 肉類
     '鶏むね肉': 100,    // 100g当たり100円
     '鶏もも肉': 120,    // 100g当たり120円
     '鶏ささみ': 150,    // 100g当たり150円
@@ -302,7 +316,7 @@ function estimatePrice(name: string, amount: number, unit: string): number {
 
 // 優先度を設定する関数
 function getPriority(name: string, category: string): 'high' | 'medium' | 'low' {
-  if (category === '肉類' || category === '魚介類' || category === '卵・乳製品' || category === 'タンパク質・大豆製品') {
+  if (category === '主食・穀物' || category === '肉類' || category === '魚介類' || category === '卵・乳製品' || category === 'タンパク質・大豆製品') {
     return 'high';
   }
   if (category === '野菜') {
@@ -380,6 +394,7 @@ export async function POST(request: NextRequest) {
 1. 各食事の指定カロリーを厳守 (±2%以内)
 2. 作り置き最大化 (昼食・夕食2パターン)
 3. ユーザー選択タンパク質源を優先、アレルギー除外
+4. 米類は炊飯後重量で記載し生米量を併記: "白米150g(0.5合分)"
 
 ${proteinIntakeFrequency > 0 ? `プロテイン摂取 (1日${proteinIntakeFrequency}回):
 - タイミング: ${proteinIntakeFrequency === 1 ? '朝食時or間食' : proteinIntakeFrequency === 2 ? '朝食時・間食時' : '食事時+間食時'}
