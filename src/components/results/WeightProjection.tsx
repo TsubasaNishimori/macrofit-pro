@@ -121,51 +121,58 @@ export default function WeightProjectionDisplay({
 
       {/* 体重変遷表 */}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="px-3 py-2 text-left">週</th>
-              <th className="px-3 py-2 text-left">日付</th>
-              <th className="px-3 py-2 text-right">予測体重</th>
-              <th className="px-3 py-2 text-right">変化量</th>
-            </tr>
-          </thead>
-          <tbody>
-            {projection.projections.slice(0, 8).map((point, index) => {
-              const isTargetReached = isWeightGain 
-                ? point.projectedWeight >= targetWeight
-                : point.projectedWeight <= targetWeight;
-              
-              return (
-                <tr 
-                  key={index} 
-                  className={`border-b ${isTargetReached ? 'bg-green-50' : ''}`}
-                >
-                  <td className="px-3 py-2 font-medium">
-                    {point.weekNumber}週目
-                  </td>
-                  <td className="px-3 py-2">
-                    {new Date(point.date).toLocaleDateString('ja-JP', {
-                      month: 'short',
-                      day: 'numeric'
-                    })}
-                  </td>
-                  <td className="px-3 py-2 text-right font-medium">
-                    {point.projectedWeight.toFixed(1)}kg
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    {index === 0 ? '-' : 
-                     `${isWeightGain ? '+' : ''}${(point.projectedWeight - currentWeight).toFixed(1)}kg`
-                    }
-                    {isTargetReached && (
-                      <span className="ml-2 text-green-600 font-medium">🎯</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="max-h-96 overflow-y-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-white">
+              <tr className="bg-gray-50">
+                <th className="px-3 py-2 text-left">週</th>
+                <th className="px-3 py-2 text-left">日付</th>
+                <th className="px-3 py-2 text-right">予測体重</th>
+                <th className="px-3 py-2 text-right">変化量</th>
+              </tr>
+            </thead>
+            <tbody>
+              {projection.projections.map((point, index) => {
+                const isTargetReached = isWeightGain 
+                  ? point.projectedWeight >= targetWeight
+                  : point.projectedWeight <= targetWeight;
+                
+                return (
+                  <tr 
+                    key={index} 
+                    className={`border-b ${isTargetReached ? 'bg-green-50' : ''}`}
+                  >
+                    <td className="px-3 py-2 font-medium">
+                      {point.weekNumber}週目
+                    </td>
+                    <td className="px-3 py-2">
+                      {new Date(point.date).toLocaleDateString('ja-JP', {
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </td>
+                    <td className="px-3 py-2 text-right font-medium">
+                      {point.projectedWeight.toFixed(1)}kg
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {index === 0 ? '-' : 
+                       `${isWeightGain ? '+' : ''}${(point.projectedWeight - currentWeight).toFixed(1)}kg`
+                      }
+                      {isTargetReached && (
+                        <span className="ml-2 text-green-600 font-medium">🎯</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {projection.projections.length > 8 && (
+          <div className="text-center mt-2 text-xs text-gray-500">
+            📊 全{projection.projections.length}週分の予測を表示中（スクロールで確認）
+          </div>
+        )}
       </div>
 
       {/* アドバイス */}
