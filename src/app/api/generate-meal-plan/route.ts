@@ -169,17 +169,36 @@ function generateShoppingListFromMealPlan(mealPlan: PatternBasedMealPlan, protei
         
         const key = name;
         const category = categorizeIngredient(name);
-        const weeklyAmount = ingredient.amount * weeklyUsage;
+        
+        // 米類は炊飯後重量から生米重量に変換（炊飯後：生米 = 2.2:1）
+        let adjustedAmount = ingredient.amount;
+        if (name.includes('米') || name.includes('白米') || name.includes('玄米')) {
+          adjustedAmount = Math.ceil(ingredient.amount / 2.2); // 炊飯後→生米変換
+        }
+        
+        const weeklyAmount = adjustedAmount * weeklyUsage;
         const estimatedPrice = estimatePrice(name, weeklyAmount, ingredient.unit);
         
         if (ingredientMap.has(key)) {
           const existing = ingredientMap.get(key)!;
           existing.amount += weeklyAmount;
           existing.estimatedPrice += estimatedPrice;
+          
+          // 米類の単位表記を統一
+          if ((name.includes('米') || name.includes('白米') || name.includes('玄米')) && 
+              existing.unit !== 'g(生米)') {
+            existing.unit = 'g(生米)';
+          }
         } else {
+          // 米類の買い物リスト表示単位を調整
+          let displayUnit = ingredient.unit;
+          if (name.includes('米') || name.includes('白米') || name.includes('玄米')) {
+            displayUnit = 'g(生米)';
+          }
+          
           ingredientMap.set(key, {
             amount: weeklyAmount,
-            unit: ingredient.unit,
+            unit: displayUnit,
             estimatedPrice: estimatedPrice,
             category: category
           });
