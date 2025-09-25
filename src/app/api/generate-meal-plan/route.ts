@@ -237,7 +237,7 @@ function isStockItem(ingredientName: string): boolean {
 function categorizeIngredient(ingredientName: string): string {
   const name = ingredientName.toLowerCase();
   
-  if (name.includes('米') || name.includes('白米') || name.includes('玄米') || name.includes('パン') || name.includes('食パン') || name.includes('オートミール') || name.includes('パスタ') || name.includes('うどん') || name.includes('そば')) {
+  if (name.includes('白米') || name.includes('玄米') || name.includes('パン') || name.includes('食パン') || name.includes('オートミール') || name.includes('パスタ') || name.includes('うどん') || name.includes('そば')) {
     return '主食・穀物';
   }
   if (name.includes('鶏') || name.includes('豚') || name.includes('牛') || name.includes('肉')) {
@@ -269,8 +269,7 @@ function categorizeIngredient(ingredientName: string): string {
 function estimatePrice(name: string, amount: number, unit: string): number {
   const pricePerUnit: { [key: string]: number } = {
     // 主食類（kg単位で管理）
-    '米': 400,          // 1kg当たり400円
-    '白米': 400,        // 1kg当たり400円
+    '白米': 800,        // 1kg当たり800円
     '玄米': 500,        // 1kg当たり500円
     'オートミール': 600, // 1kg当たり600円
     'パスタ': 400,      // 1kg当たり400円（500g袋×2で算出）
@@ -305,7 +304,7 @@ function estimatePrice(name: string, amount: number, unit: string): number {
     const unitPrice = pricePerUnit[name] || defaultPrice;
     
     // kg単位で価格設定されている主食類
-    if (name.includes('米') || name.includes('白米') || name.includes('玄米') || 
+    if (name.includes('白米') || name.includes('玄米') || 
         name.includes('オートミール') || name.includes('パスタ')) {
       return Math.ceil((amount / 1000) * unitPrice);
     }
