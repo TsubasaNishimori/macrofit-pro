@@ -1,11 +1,3 @@
-/**
- * Next.js Configuration
- * Dev Performance Tweaks:
- * - To speed up first startup, you can temporarily relax TypeScript & ESLint blocking checks.
- *   Set FAST_DEV=1 in your environment to enable relaxed mode.
- */
-const fastDev = process.env.FAST_DEV === '1';
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -16,12 +8,11 @@ const nextConfig = {
     AZURE_OPENAI_API_VERSION: process.env.AZURE_OPENAI_API_VERSION,
   },
   typescript: {
-    ignoreBuildErrors: fastDev, // FAST_DEV=1 で型エラーを起動ブロックしない
+    ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: fastDev, // FAST_DEV=1 でESLintを非ブロッキング化
+    ignoreDuringBuilds: false,
   },
-  // NOTE: Turbopack は `next dev --turbo` のCLIフラグで利用。設定側での boolean 指定は警告対象のため未指定。
 };
 
 module.exports = nextConfig;

@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:turbo": "next dev --turbo",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -12,10 +11,8 @@
   "dependencies": {
     "autoprefixer": "^10.4.21",
     "next": "14.2.15",
-    "openai": "^4.67.3",
     "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "zod": "^3.23.8"
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
     "@types/node": "^22.7.5",

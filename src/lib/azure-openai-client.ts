@@ -127,8 +127,7 @@ export class MacroFitAzureOpenAIClient {
 
       return await response.json();
     } catch (error) {
-      console.error('Azure OpenAI API call failed:', error);
-      throw error;
+      throw new Error('AI応答の生成に失敗しました。しばらく待ってから再度お試しください。');
     }
   }
 

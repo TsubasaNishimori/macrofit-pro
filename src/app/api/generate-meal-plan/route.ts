@@ -340,13 +340,8 @@ function getPriority(name: string, category: string): 'high' | 'medium' | 'low' 
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🍽️ 週間献立生成API開始');
-
     const body: MealPlanRequest = await request.json();
     const { userInfo, nutritionTargets } = body;
-
-    console.log('ユーザー情報:', userInfo);
-    console.log('栄養目標:', nutritionTargets);
 
     // プロテイン摂取回数と朝食主食の情報を取得
     const proteinIntakeFrequency = (userInfo as any).proteinIntakeFrequency || 0;
@@ -364,9 +359,7 @@ export async function POST(request: NextRequest) {
       dailyCarbs: nutritionTargets.dailyCarbs
     };
     
-    console.log('プロテイン摂取:', proteinIntakeFrequency, '回/日');
-    console.log('プロテイン追加栄養:', { calories: proteinCalories, protein: proteinAmount });
-    console.log('調整済み栄養目標:', adjustedNutritionTargets);
+
 
     // 食事回数は3回固定
     const mealsPerDay = 3;
@@ -374,16 +367,10 @@ export async function POST(request: NextRequest) {
     const mealCalorieTargets = distributeCaloriesByMeals(adjustedNutritionTargets.dailyCalories, mealsPerDay);
     const mealDetails = getMealCalorieDetails(adjustedNutritionTargets.dailyCalories, mealsPerDay);
     
-    console.log('食事回数:', mealsPerDay);
-    console.log('食事別カロリー目標（プロテイン除く）:', mealCalorieTargets);
-    console.log('食事詳細:', mealDetails);
-
     // 食事別の詳細な目標を作成
     const mealTargetsText = mealDetails.map(detail => 
       `${detail.name}: ${detail.calories}kcal (${detail.percentage}%)`
     ).join('\n');
-
-    console.log('食事別目標:\n', mealTargetsText);
 
     // Azure OpenAI クライアント初期化
     const client = new MacroFitAzureOpenAIClient();
@@ -446,18 +433,15 @@ ${mealTargetsText}
 
 純粋JSONで回答、{開始}終了`;
 
-    console.log('Azure OpenAI API呼び出し開始（献立生成）...');
-
     const response = await client.generateChatCompletion([
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
     ], {
-      temperature: 0.1,  // より決定的な応答のため低く設定
-      maxTokens: 3000    // 必要十分なトークン数に削減
+      temperature: 0.1,
+      maxTokens: 3000
     });
 
     const aiResponse = response.choices[0]?.message?.content;
-    console.log('AI応答（献立）:', aiResponse?.substring(0, 500) + '...');
 
     if (!aiResponse) {
       throw new Error('AI応答が空です');
@@ -488,24 +472,15 @@ ${mealTargetsText}
         .replace(/[^}]*$/, '')
         .trim();
       
-      console.log('クリーンアップ後のJSON長:', cleanResponse.length);
-      console.log('JSON開始:', cleanResponse.substring(0, 100));
-      console.log('JSON終了:', cleanResponse.slice(-100));
-      
       mealPlan = JSON.parse(cleanResponse);
-      console.log('パース済み献立パターン:', Object.keys(mealPlan));
       
     } catch (parseError) {
       console.error('JSON解析エラー:', parseError);
       throw new Error(`AI応答の解析に失敗しました。応答が不完全または形式が正しくありません。`);
     }
 
-    console.log('✅ 週間献立生成完了');
-    
     // 献立から1週間分の買い物リストを自動生成
-    console.log('🛒 1週間分の買い物リスト自動生成開始...');
     const shoppingList = generateShoppingListFromMealPlan(mealPlan, proteinIntakeFrequency);
-    console.log('✅ 1週間分の買い物リスト生成完了');
 
     return NextResponse.json({
       success: true,
@@ -517,11 +492,9 @@ ${mealTargetsText}
     });
 
   } catch (error) {
-    console.error('❌ 週間献立生成エラー:', error);
-    
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : '未知のエラー',
+      error: '献立生成に失敗しました。しばらく待ってから再度お試しください。',
       message: '週間献立生成に失敗しました'
     }, { status: 500 });
   }
