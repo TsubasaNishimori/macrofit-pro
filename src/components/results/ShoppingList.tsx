@@ -5,9 +5,10 @@ import { ShoppingList } from '@/lib/types';
 interface ShoppingListProps {
   shoppingList: ShoppingList | null;
   loading?: boolean;
+  onGenerateShoppingList?: () => void;
 }
 
-export default function ShoppingListDisplay({ shoppingList, loading = false }: ShoppingListProps) {
+export default function ShoppingListDisplay({ shoppingList, loading = false, onGenerateShoppingList }: ShoppingListProps) {
   if (loading) {
     return (
       <div className="bg-white rounded-lg p-6 shadow-lg">
@@ -31,7 +32,11 @@ export default function ShoppingListDisplay({ shoppingList, loading = false }: S
         <div className="text-center py-8">
           <div className="text-gray-400 text-lg mb-2">🤖</div>
           <p className="text-gray-500">買い物リストを生成中...</p>
-          <button className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+          <button 
+            className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={onGenerateShoppingList}
+            disabled={!onGenerateShoppingList}
+          >
             買い物リストを生成
           </button>
         </div>

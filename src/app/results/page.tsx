@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserInfo, NutritionTargets, WeightProjection, ShoppingList, WeeklyMealPlan, PatternBasedMealPlan } from '@/lib/types';
 import { calculatePFCTargets, calculateWeightProjection } from '@/lib/nutrition-calculator';
@@ -8,9 +8,11 @@ import NutritionSummary from '@/components/results/NutritionSummary';
 import WeightProjectionDisplay from '@/components/results/WeightProjection';
 import ShoppingListDisplay from '@/components/results/ShoppingList';
 import WeeklyMealPlanDisplay from '@/components/results/WeeklyMealPlan';
+import ChatComponent from '@/components/results/ChatComponent';
 
 export default function Results() {
   const router = useRouter();
+  const chatSectionRef = useRef<HTMLDivElement>(null);
   const [userInfo, setUserInfo] = useState<Partial<UserInfo>>({});
   const [isUserInfoLoaded, setIsUserInfoLoaded] = useState(false);
   const [nutrition, setNutrition] = useState<NutritionTargets | null>(null);
@@ -214,6 +216,17 @@ export default function Results() {
             >
               {isGeneratingMealPlan ? '🔄 生成中...' : '🍽️ 献立 & 買い物リスト生成'}
             </button>
+            <button
+              onClick={() => {
+                chatSectionRef.current?.scrollIntoView({ 
+                  behavior: 'smooth',
+                  block: 'start'
+                });
+              }}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              💬 相談
+            </button>
           </div>
         </div>
 
@@ -238,6 +251,7 @@ export default function Results() {
           <ShoppingListDisplay 
             shoppingList={shoppingList}
             loading={isGeneratingMealPlan}
+            onGenerateShoppingList={generateMealPlan}
           />
 
           {/* 週間献立 */}
@@ -280,6 +294,11 @@ export default function Results() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* チャット機能 */}
+        <div ref={chatSectionRef} className="mt-8">
+          <ChatComponent userInfo={userInfo as UserInfo} />
         </div>
       </div>
     </div>
