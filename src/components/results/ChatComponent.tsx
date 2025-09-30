@@ -243,7 +243,7 @@ export default function ChatComponent({ userInfo }: ChatComponentProps) {
               )}
               <div className={`group max-w-xs lg:max-w-md px-3 py-2 shadow-md relative backdrop-blur-sm ring-1 ${
                 isUser
-                  ? 'bg-brand-navy-600/95 text-white rounded-l-2xl rounded-tr-2xl ring-brand-navy-700'
+                  ? 'bg-gray-100 text-gray-900 rounded-l-2xl rounded-tr-2xl ring-gray-300'
                   : `${currentPersona?.id === 'trainer' 
                       ? 'bg-white text-gray-900 ring-red-200 rounded-r-2xl rounded-tl-2xl' 
                       : 'bg-white text-gray-900 ring-pink-200 rounded-r-2xl rounded-tl-2xl'}`
@@ -252,7 +252,7 @@ export default function ChatComponent({ userInfo }: ChatComponentProps) {
                   {message.content}
                 </div>
                 <div className={`text-[10px] mt-1 tracking-wide flex items-center gap-1 ${
-                  isUser ? 'text-white/60' : 'text-gray-400'
+                  isUser ? 'text-gray-400' : 'text-gray-400'
                 }`}>
                   <span>{formatTime(message.timestamp)}</span>
                 </div>
@@ -260,7 +260,7 @@ export default function ChatComponent({ userInfo }: ChatComponentProps) {
               {/* User avatar placeholder (optional) */}
               {isUser && (
                 <div className="ml-3 flex-shrink-0">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-brand-orange-500 text-white text-xs font-semibold ring-2 ring-brand-orange-200 shadow-sm">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-300 text-gray-800 text-xs font-semibold ring-2 ring-gray-200 shadow-sm">
                     YOU
                   </div>
                 </div>
