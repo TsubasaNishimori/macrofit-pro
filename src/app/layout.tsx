@@ -3,6 +3,10 @@ import './globals.css';
 export const metadata = {
   title: 'MacroFit Pro - 筋トレ特化型栄養管理',
   description: 'AI駆動で完璧なマクロ管理を実現する筋力トレーニング特化型栄養管理アプリ',
+  icons: {
+    icon: '/images/app-icon.png',
+    apple: '/images/app-icon.png',
+  },
 };
 
 export default function RootLayout({

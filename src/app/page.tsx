@@ -1,4 +1,5 @@
 import UserInfoForm from '@/components/forms/UserInfoForm';
+import Image from 'next/image';
 
 export default function Home() {
   return (
@@ -6,9 +7,19 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         {/* ヘッダー */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4">
-            MacroFit Pro 🏋️‍♂️
-          </h1>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900">
+              MacroFit Pro
+            </h1>
+            <Image
+              src="/images/app-icon.png"
+              alt="MacroFit Pro アイコン"
+              width={80}
+              height={80}
+              className="rounded-lg shadow-lg"
+              priority
+            />
+          </div>
           <p className="text-xl text-gray-600 mb-4">
             筋トレ特化型栄養管理アプリ
           </p>

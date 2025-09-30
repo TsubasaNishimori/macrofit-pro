@@ -305,3 +305,8 @@ npm run start
 
 ---
 デプロイ関連の詳細を別ファイルに分離したい場合は `DEPLOYMENT.md` 作成を推奨します。
+
+## 📄 関連ドキュメント
+
+- アプリ紹介記事: [docs/intro-article.md](./docs/intro-article.md)
+
