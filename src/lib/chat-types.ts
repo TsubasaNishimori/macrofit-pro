@@ -30,6 +30,7 @@ export interface ChatPersonaInfo {
   emoji: string;
   description: string;
   color: string;
+  avatarPath?: string; // 画像アバター（public/avatars 配下）
 }
 
 export const CHAT_PERSONAS: ChatPersonaInfo[] = [
@@ -38,13 +39,15 @@ export const CHAT_PERSONAS: ChatPersonaInfo[] = [
     name: 'トレーナー',
     emoji: '💪',
     description: '厳しく指導してくれるスパルタトレーナー',
-    color: 'bg-red-500'
+    color: 'bg-red-500',
+    avatarPath: '/avatars/trainer.png'
   },
   {
     id: 'grandma',
     name: 'おばあちゃん',
     emoji: '👵',
     description: '優しく見守ってくれる心温かいおばあちゃん',
-    color: 'bg-pink-100 text-pink-800 border-pink-300'
+    color: 'bg-pink-100 text-pink-800 border-pink-300',
+    avatarPath: '/avatars/grandma.png'
   }
 ];
